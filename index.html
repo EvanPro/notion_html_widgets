@@ -1,0 +1,297 @@
+
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>A Flip clock</title>
+		<link rel="preconnect" href="https://fonts.googleapis.com" />
+		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+		<link
+			href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap"
+			rel="stylesheet"
+		/>
+        <style>
+            body {
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	align-items: center;
+	font: 900 normal 1rem 'Poppins', sans-serif;
+}
+
+#container {
+	font-size: 55px;
+	width: 300px;
+}
+
+#flip-clock {
+	display: flex;
+	perspective: 1000px;
+	position: relative;
+}
+
+#logo {
+	position: absolute;
+    height: 20px;
+	width: 60px;
+	z-index: 1;
+	bottom: 0;
+	right: 10;
+	margin: 5px;
+}
+
+.digit-line {
+	position: absolute;
+	width: 100%;
+	height: 0.3vw;
+	background: white;
+	top: 50%;
+	left: 0;
+	transform: translateY(-50%);
+	z-index: 2;
+}
+
+.digit {
+	position: relative;
+	width: 100px;
+	aspect-ratio: 1;
+	box-shadow: rgba(0, 0, 0, 0.19) 0px 10px 20px, rgba(0, 0, 0, 0.23) 0px 6px 6px;
+	line-height: 0;
+	margin: 0 3px;
+}
+
+.text {
+	position: absolute;
+	bottom: -15px;
+	left: 50%;
+	transform: translateX(-50%);
+	font-size: 10px;
+	font-weight: 500;
+}
+
+.digit::before,
+.digit::after {
+	position: absolute;
+	z-index: 0;
+	overflow: hidden;
+	display: flex;
+	justify-content: center;
+	width: 100%;
+	height: 50%;
+}
+
+.digit::before {
+	/* 使用方法链接：https://css-tricks.com/css-attr-function-got-nothin-custom-properties/ */
+	content: attr(data-digit-before);
+	bottom: 0;
+	align-items: flex-start;
+}
+
+.digit::after {
+	content: attr(data-digit-after);
+	top: 0;
+	align-items: flex-end;
+}
+
+.card {
+	position: absolute;
+	z-index: 1;
+	width: 100%;
+	height: 50%;
+	transform-style: preserve-3d;
+	transform-origin: bottom;
+	transform: rotateX(0);
+	transition: transform 0.7s ease-in-out;
+}
+
+.card.flipped {
+	transform: rotateX(-180deg);
+}
+
+.card-face {
+	position: absolute;
+	display: flex;
+	justify-content: center;
+	width: 100%;
+	height: 100%;
+	overflow: hidden;
+	backface-visibility: hidden;
+}
+
+.card-face-front {
+	align-items: flex-end;
+}
+
+.card-face-back {
+	align-items: flex-start;
+	transform: rotateX(-180deg);
+}
+
+.digit,
+.digit::before,
+.digit::after,
+.card,
+.card-face {
+	border-radius: 10px;
+}
+
+.digit::before,
+.digit::after,
+.card-face-front,
+.card-face-back {
+	background-image: linear-gradient(
+		to right bottom,
+		#0c0d0e,
+		#121415,
+		#17191a,
+		#1c1f1e,
+		#222422
+	);
+	color: white;
+}
+
+.digit::before,
+.card-face-back {
+	border-top-left-radius: 0;
+	border-top-right-radius: 0;
+	border-top: none;
+}
+
+.digit::after,
+.card-face-front {
+	border-bottom-left-radius: 0;
+	border-bottom-right-radius: 0;
+	border-bottom: none;
+}
+
+        </style>
+	</head>
+	<body>
+		<div id="container">
+			<div id="flip-clock">
+				<!-- 每一个 #digit 为单张翻转卡片的底层 -->
+				<!-- 在样式中，通过 ::before 和 ::after 来定义底层卡片的位置和大小 -->
+				<!-- 通过 dataset 来定义 ::before 和  ::after 的值 -->
+				<!-- 和 .card 共同构成翻转的效果 -->
+				<div class="digit" id="hour">
+					<!-- .card 负责通过 3D css 实现翻转效果  -->
+					<div class="card">
+						<div class="card-face card-face-front"></div>
+						<div class="card-face card-face-back"></div>
+					</div>
+					<div class="text">Hour</div>
+					<div class="digit-line"></div>
+				</div>
+				<div class="digit" id="minute">
+					<div class="card">
+						<div class="card-face card-face-front"></div>
+						<div class="card-face card-face-back"></div>
+					</div>
+					<div class="text">Minute</div>
+					<div class="digit-line"></div>
+                    <img id="logo" src="../assets/logo.png" alt="roll-roll-go logo" />
+				</div>
+				<div class="digit" id="second">
+					<div class="card">
+						<div class="card-face card-face-front"></div>
+						<div class="card-face card-face-back"></div>
+					</div>
+					<div class="text">Second</div>
+					<div class="digit-line"></div>
+				</div>
+			</div>
+		</div>
+	</body>
+    <script>
+        function getCurrentTime() {
+	const date = new Date();
+	// 把返回值改成键为 hour/minute/second 的对象，与后面的 elements 格式一致，这样就可以简化后面 initTime 和 flipClock 的写法
+	return {
+		hour: String(date.getHours()).padStart(2, '0'),
+		minute: String(date.getMinutes()).padStart(2, '0'),
+		second: String(date.getSeconds()).padStart(2, '0'),
+	};
+}
+
+function getNextDigit(current, unit) {
+	let next = Number(current) + 1;
+	if (unit.className.includes('hour')) {
+		next = next >= 24 ? '00' : String(next).padStart(2, '0');
+	} else {
+		next = next >= 60 ? '00' : String(next).padStart(2, '0');
+	}
+	return next;
+}
+
+const elements = {
+	hour: { digit: document.getElementById('hour') },
+	minute: { digit: document.getElementById('minute') },
+	second: { digit: document.getElementById('second') },
+};
+
+for (const key in elements) {
+	const el = elements[key];
+	el.card = el.digit.querySelector('.card');
+	el.cardFaces = el.card.querySelectorAll('.card-face');
+	el.cardFaceFront = el.cardFaces[0];
+	el.cardFaceBack = el.cardFaces[1];
+}
+
+//更新时钟对应的卡片显示
+function updateElement(value, element) {
+	const next = getNextDigit(value, element.digit);
+	element.digit.dataset.digitBefore = value;
+	element.digit.dataset.digitAfter = next;
+	element.cardFaceFront.textContent = value;
+	element.cardFaceBack.textContent = next;
+}
+
+function initCurrentTime() {
+	const timeUnits = getCurrentTime();
+
+	for (const key in timeUnits) {
+		updateElement(timeUnits[key], elements[key]);
+	}
+}
+
+function flipCard(el, value) {
+	el.card.classList.add('flipped');
+	el.card.addEventListener(
+		'transitionend',
+		function () {
+			//卡片翻转之后需要更新卡片内部的信息
+			updateElement(value, el);
+			// 创建克隆卡片，是为了确保克隆卡片不会立刻翻转
+			//true 是深拷贝，包含 node 内的文本
+			const cardClone = el.card.cloneNode(true);
+			cardClone.classList.remove('flipped');
+			el.digit.replaceChild(cardClone, el.card);
+			//在 elements 对象中用克隆的卡片替换原始卡片，以保证正确的引用
+			el.card = cardClone;
+			el.cardFaces = el.card.querySelectorAll('.card-face');
+			el.cardFaceFront = el.cardFaces[0];
+			el.cardFaceBack = el.cardFaces[1];
+		},
+		{ once: true }
+	);
+}
+
+function flipClock() {
+	const timeUnits = getCurrentTime();
+
+	for (const key in timeUnits) {
+		if (timeUnits[key] !== elements[key].digit.dataset.digitBefore) {
+			flipCard(elements[key], timeUnits[key]);
+		}
+	}
+}
+
+function launchClock() {
+	initCurrentTime();
+	setInterval(flipClock, 1000);
+}
+
+launchClock();
+
+    </script>
+</html>
